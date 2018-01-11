@@ -10,7 +10,7 @@ class CloudWatchMetrics(object):
         cfg = config["cloudwatch"]
         self.aggregation_time_period = aggregation_time_period
         self.last_sent_timestamp = time.time() #last time metrics were sent to CloudWatch
-        self.events_count = 0 #number of events in last aggregation_time_period
+        self.events_count = 0 #number of events in current aggregation_time_period
         if not re.match(CloudWatchMetrics.VALID, cfg):
             e = ValueError("Bad CloudWatch configuration {0}.  Must match {1}."
                            .format(cfg, CloudWatchMetrics.VALID))
@@ -27,8 +27,8 @@ class CloudWatchMetrics(object):
 
     def events(self, count):
         time_now = time.time()
-        # send put_metric_data last_sent_timestamp was >= 59 seconds ago
         self.events_count += count
+        # send put_metric_data if last_sent_timestamp not within aggregation time period
         if(time_now - self.last_sent_timestamp >= self.aggregation_time_period):
             self._client.put_metric_data(
                 Namespace = self._namespace,
